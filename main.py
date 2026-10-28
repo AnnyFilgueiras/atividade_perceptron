@@ -1,5 +1,6 @@
+import sys
 from data import data_train, data_test
-from perceptron import Perceptron
+from perceptron import Perceptron, MinMaxPerceptron
 
 EXIT_COMMANDS = ("sair", "exit", "q")
 
@@ -60,9 +61,14 @@ def interactive_classification(model):
 
 
 def main():
-    model = Perceptron(rate=0.1, max_epoch=1000)
+    use_minmax = "--minmax" in sys.argv
+    if use_minmax:
+        model = MinMaxPerceptron(rate=0.1, max_epoch=1000)
+        print("--- Iniciando treinamento (Normalização: Min-Max no treino) ---")
+    else:
+        model = Perceptron(rate=0.1, max_epoch=1000)
+        print("--- Iniciando treinamento (Normalização: Escala fixa do PDF) ---")
 
-    print("--- Iniciando treinamento ---")
     model.train(data_train)
     display_training_summary(model)
 

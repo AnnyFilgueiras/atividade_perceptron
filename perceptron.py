@@ -14,10 +14,9 @@ class Perceptron:
         self.epochs_executed = 0
         self.last_epoch_errors = 0
 
-    @classmethod
-    def normalize(cls, temperature, humidity):
-        temperature_normalized = temperature / cls.TEMP_SCALE
-        humidity_normalized = humidity / cls.HUMIDITY_SCALE
+    def normalize(self, temperature, humidity):
+        temperature_normalized = temperature / self.TEMP_SCALE
+        humidity_normalized = humidity / self.HUMIDITY_SCALE
         return temperature_normalized, humidity_normalized
 
     def predict(self, temperature, humidity):
@@ -77,5 +76,30 @@ class Perceptron:
 
         accuracy = (predict_corrects / len(data_test)) * 100 if data_test else 0.0
         return results, predict_corrects, accuracy
+
+
+class MinMaxPerceptron(Perceptron):
+    def __init__(self, rate=0.1, max_epoch=1000):
+        super().__init__(rate=rate, max_epoch=max_epoch)
+        self.temp_min = 0.0
+        self.temp_max = self.TEMP_SCALE
+        self.hum_min = 0.0
+        self.hum_max = self.HUMIDITY_SCALE
+
+    def _fit_scaler(self, data_train):
+        self.temp_min = min(sample["temperature"] for sample in data_train)
+        self.temp_max = max(sample["temperature"] for sample in data_train)
+        self.hum_min = min(sample["humidity"] for sample in data_train)
+        self.hum_max = max(sample["humidity"] for sample in data_train)
+
+    def normalize(self, temperature, humidity):
+        temperature_normalized = (temperature - self.temp_min) / (self.temp_max - self.temp_min)
+        humidity_normalized = (humidity - self.hum_min) / (self.hum_max - self.hum_min)
+        return temperature_normalized, humidity_normalized
+
+    def train(self, data_train):
+        self._fit_scaler(data_train)
+        super().train(data_train)
+
 
 
