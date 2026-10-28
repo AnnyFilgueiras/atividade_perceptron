@@ -1,82 +1,81 @@
-def normalize(temperature, humidity):
-    temperatureNormalized = temperature / 40
-    humidityNormalized    = humidity / 100
-    return temperatureNormalized, humidityNormalized
+class Perceptron:
+    TEMP_SCALE = 40.0
+    HUMIDITY_SCALE = 100.0
 
+    def __init__(self, rate=0.1, max_epoch=1000):
+        self.rate = rate
+        self.max_epoch = max_epoch
+        self._reset_state()
 
-def predict(temperature, humidity, weightTemperature, weightHumidity, bias):
-    temperatureNormalized, humidityNormalized = normalize(temperature, humidity)
-    weightedSum = (
-        weightTemperature * temperatureNormalized
-        + weightHumidity * humidityNormalized
-        + bias
-    )
+    def _reset_state(self):
+        self.weight_temperature = 0.0
+        self.weight_humidity = 0.0
+        self.bias = 0.0
+        self.epochs_executed = 0
+        self.last_epoch_errors = 0
 
-    if weightedSum >= 0:
-        return 1
-    else:
-        return 0
+    @classmethod
+    def normalize(cls, temperature, humidity):
+        temperature_normalized = temperature / cls.TEMP_SCALE
+        humidity_normalized = humidity / cls.HUMIDITY_SCALE
+        return temperature_normalized, humidity_normalized
 
-
-def update_parameters(weightTemperature, weightHumidity, bias, error, temperature, humidity, rate=0.1):
-    temperatureNormalized, humidityNormalized = normalize(temperature, humidity)
-    weightTemperature += rate * error * temperatureNormalized
-    weightHumidity    += rate * error * humidityNormalized
-    bias              += rate * error
-    return weightTemperature, weightHumidity, bias
-
-
-def train(data_train, rate=0.1, maxEpoch=1000):
-    weightTemperature = 0.0
-    weightHumidity    = 0.0
-    bias              = 0.0
-    errorsInEpoch     = 0
-
-    for currentEpoch in range(maxEpoch):
-        errorsInEpoch = 0
-
-        for d in data_train:
-            outputPredict = predict(
-                d["temperature"], d["humidity"],
-                weightTemperature, weightHumidity, bias
-            )
-            error = d["class"] - outputPredict
-
-            if error != 0:
-                weightTemperature, weightHumidity, bias = update_parameters(
-                    weightTemperature, weightHumidity, bias,
-                    error, d["temperature"], d["humidity"], rate
-                )
-                errorsInEpoch += 1
-
-        if errorsInEpoch == 0:
-            break
-
-    return weightTemperature, weightHumidity, bias, currentEpoch + 1, errorsInEpoch
-
-
-def evaluate(data_test, weightTemperature, weightHumidity, bias):
-    results = []
-    predictCorrects = 0
-
-    for d in data_test:
-        predicted = predict(
-            d["temperature"], d["humidity"],
-            weightTemperature, weightHumidity, bias
+    def predict(self, temperature, humidity):
+        temperature_normalized, humidity_normalized = self.normalize(temperature, humidity)
+        weighted_sum = (
+            self.weight_temperature * temperature_normalized
+            + self.weight_humidity * humidity_normalized
+            + self.bias
         )
-        expected = d["class"]
-        isCorrect = (predicted == expected)
-        if isCorrect:
-            predictCorrects += 1
+        return 1 if weighted_sum >= 0 else 0
 
-        results.append({
-            "id": d["id"],
-            "temperature": d["temperature"],
-            "humidity": d["humidity"],
-            "expected": expected,
-            "predicted": predicted,
-            "correct": isCorrect
-        })
+    def update_parameters(self, error, temperature, humidity):
+        temperature_normalized, humidity_normalized = self.normalize(temperature, humidity)
+        self.weight_temperature += self.rate * error * temperature_normalized
+        self.weight_humidity += self.rate * error * humidity_normalized
+        self.bias += self.rate * error
 
-    accuracy = (predictCorrects / len(data_test)) * 100 if data_test else 0.0
-    return results, predictCorrects, accuracy
+    def train(self, data_train):
+        self._reset_state()
+
+        for current_epoch in range(self.max_epoch):
+            errors_in_epoch = 0
+
+            for sample in data_train:
+                output_predict = self.predict(sample["temperature"], sample["humidity"])
+                error = sample["class"] - output_predict
+
+                if error != 0:
+                    self.update_parameters(error, sample["temperature"], sample["humidity"])
+                    errors_in_epoch += 1
+
+            self.epochs_executed = current_epoch + 1
+            self.last_epoch_errors = errors_in_epoch
+
+            if errors_in_epoch == 0:
+                break
+
+    def evaluate(self, data_test):
+        results = []
+        predict_corrects = 0
+
+        for sample in data_test:
+            predicted = self.predict(sample["temperature"], sample["humidity"])
+            expected = sample["class"]
+            is_correct = predicted == expected
+            if is_correct:
+                predict_corrects += 1
+
+            results.append({
+                "id": sample["id"],
+                "temperature": sample["temperature"],
+                "humidity": sample["humidity"],
+                "expected": expected,
+                "predicted": predicted,
+                "correct": is_correct,
+            })
+
+        accuracy = (predict_corrects / len(data_test)) * 100 if data_test else 0.0
+        return results, predict_corrects, accuracy
+
+
