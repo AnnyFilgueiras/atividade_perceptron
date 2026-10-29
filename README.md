@@ -40,5 +40,11 @@ O **viés** (*bias*) permite deslocar a fronteira de decisão (hiperplano/reta d
 ### (b) Por que normalizar as entradas?
 A **normalização** coloca variáveis de grandezas diferentes (como temperatura em °C e umidade em %) em escalas próximas (neste caso, próximas ao intervalo $[0, 1]$). Isso evita que entradas com valores numéricos maiores dominem as atualizações dos pesos, tornando o treinamento mais estável e convergente em menos épocas.
 
+> **Nota Técnica — Escala Fixa de Domínio vs. Min-Max Scaling (Sem *Data Leakage*):**
+
+> O roteiro da atividade define uma normalização por constantes de domínio (`temperatura / 40` e `umidade / 100`), que mantém os dados de treino concentrados nos intervalos $[0.60, 0.925]$ para temperatura e $[0.30, 0.90]$ para umidade, convergindo em **71 épocas**.
+
+> Caso utilizemos a normalização **Min-Max** ($\frac{x - x_{\min}}{x_{\max} - x_{\min}}$) ajustada **exclusivamente sobre o conjunto de treino** (evitando *Data Leakage* do conjunto de teste), ambas as variáveis passam a ocupar integralmente o intervalo $[0.0, 1.0]$. Nesse cenário (executável via `python3 main.py --minmax`), o Perceptron converge em apenas **11 épocas** (cerca de **6,4x mais rápido**) e mantém **100% de acurácia** nos testes.
+
 ### (c) O que um Perceptron simples não consegue classificar?
 Um Perceptron de camada única só consegue resolver problemas **linearmente separáveis** (onde uma única reta ou hiperplano divide as duas classes). Ele **não consegue** classificar conjuntos de dados **não linearmente separáveis**, sendo o exemplo clássico a função lógica **XOR** (OU exclusivo).
