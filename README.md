@@ -1,5 +1,7 @@
 # Atividade Prática — Implementação de uma rede Perceptron
 
+**Alunos:** Anny Karoliny Germano Filgueiras e Gabryel Adriano Borges de Souza
+
 ## 1. Registro da Execução
 
 ```text
